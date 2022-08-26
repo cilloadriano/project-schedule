@@ -1,0 +1,64 @@
+version: '3'
+volumes:
+    postgres:
+
+services:
+  postgres:
+    container_name: dbspring_postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "schedule"
+#      PGDATA: "/data/postgres"
+    volumes:
+       - postgres:/data/postgres
+       - ./banco/docker/volume_postgres:/var/lib/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  schedule-db:
+    depends_on:
+      - postgres
+    image: "node:16-alpine"
+    user: "node"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./schedule-db:/home/node/app
+    command: "yarn prisma migrate dev"
+  
+  backend:
+    depends_on:
+      - schedule-db
+    image: "node:16-alpine"
+    user: "node"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./backend:/home/node/app
+    ports:
+      - "4003:4003"
+    command: "sh /home/node/app/start.sh"
+
+  frontend:
+    depends_on:
+      - backend
+    image: "node:16-alpine"
+    user: "node"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./frontend:/home/node/app
+    ports:
+      - "3000:3000"
+    command: "sh /home/node/app/start.sh"

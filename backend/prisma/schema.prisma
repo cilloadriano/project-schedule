@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Person {
+  id           Int      @id @default(autoincrement())
+  person_Name  String
+  person_Email String?
+  created_at   DateTime @default(now())
+
+  @@map("persons")
+}
+
+model Schedule {
+  id                 Int     @id @default(autoincrement())
+  event_Name         String
+  event_Participants String
+  event_Date         DateTime @unique
+  created_at         DateTime @default(now())
+
+  @@map("scheduling")
+}
+
+
